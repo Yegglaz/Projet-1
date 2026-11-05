@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docu — Documentaires science & nature</title>
+<meta name="description" content="Sélection de documentaires et d'actualités science & nature, personnalisée selon vos goûts.">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<header>
+  <div class="logo"><b>DOCU</b>science</div>
+  <input id="q" type="search" placeholder="Rechercher…" aria-label="Rechercher">
+  <button id="btnAuth" class="hbtn">Connexion</button>
+</header>
+<main>
+  <div class="ad" data-slot="banner"></div>
+  <h1>Documentaires</h1>
+  <p class="sub" id="maj">Chargement…</p>
+  <div class="pills" id="sources"></div>
+  <h2 class="t">Sujets que vous suivez</h2>
+  <div class="pills" id="topics"></div>
+  <section id="secNew" hidden><h2>Nouveautés de vos sujets</h2><div class="grid" id="gNew"></div></section>
+  <section id="secReco"><h2>Pour vous</h2><div class="grid" id="gReco"></div></section>
+  <section><h2 id="hAll">Tous les contenus</h2><div class="grid" id="gAll"></div></section>
+  <p id="msg" class="msg" hidden></p>
+</main>
+<footer>
+  Titres et résumés issus de Futura-Sciences et National Geographic, © de leurs auteurs. Chaque carte renvoie vers la source.<br>
+  <a href="mentions-legales.html">Mentions légales</a> · <a href="confidentialite.html">Confidentialité</a> · <a href="#" id="cookies">Gérer les cookies</a>
+</footer>
+
+<dialog id="dlg"><form method="dialog" id="fAuth">
+  <h3 id="dTitre">Connexion</h3>
+  <p class="mut" id="dInfo">Retrouvez vos sujets et recommandations sur tous vos appareils.</p>
+  <input id="em" type="email" placeholder="Email" required autocomplete="email">
+  <input id="pw" type="password" placeholder="Mot de passe (8 caractères min.)" required minlength="8" autocomplete="current-password">
+  <p id="err" class="err" hidden></p>
+  <div class="row"><button type="submit" class="pill on" id="bOk">Se connecter</button>
+  <button type="button" class="pill" id="bSw">Créer un compte</button>
+  <button type="button" class="pill" id="bX">Fermer</button></div>
+</form></dialog>
+
+<div id="consent" class="consent" hidden>
+  <p>Nous utilisons des cookies publicitaires pour financer le site. Vous pouvez les accepter ou les refuser.</p>
+  <div><button class="pill" id="cNo">Refuser</button> <button class="pill on" id="cYes">Accepter</button></div>
+</div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="app.js"></script>
+</body></html>

@@ -1,9 +1,3 @@
-const C = window.CONFIG || {};
-const $ = s => document.querySelector(s);
-const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} } };
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const fmt = d => { const x = new Date(d); return isNaN(x) ? "" : x.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) };
-
 /* ---------- 1. Thématiques (détection par mots-clés) ---------- */
 const TOPICS = {
   espace: ["Espace", /espace|astro|galaxie|plan[èe]te|nasa|[ée]toile|mars\b|lune|trou noir|t[ée]lescope|cosm|satellite|solaire/i],
@@ -60,54 +54,6 @@ function raison(i) {
   return P.w[t] > 0.5 ? "Parce que vous aimez « " + TOPICS[t][0] + " »" : "À découvrir : " + TOPICS[t][0];
 }
 
-/* ---------- 4. Affichage ---------- */
-let tous = [], filtre = "all";
-const lienOk = u => /^https?:\/\//i.test(u || "");
-function carte(i, opts = {}) {
-  const nouveau = opts.nouveau ? '<span class="new">NOUVEAU</span>' : "";
-  return `<article class="card ${i.source}" data-id="${i.id}"><div class="in"><span class="tag">${esc(i.sourceNom)}</span>${nouveau}
-  <h3>${esc(i.titre)}</h3>${i.texte ? `<p>${esc(i.texte)}</p>` : ""}
-  <div class="why">${opts.raison ? esc(raison(i)) : esc(fmt(i.date))}</div></div>
-  <div class="acts"><button data-a="like" class="${P.liked.includes(i.id) ? "on" : ""}">♥ J'aime</button><button data-a="hide">✕ Pas intéressé</button>
-  ${lienOk(i.lien) ? `<a href="${esc(i.lien)}" target="_blank" rel="noopener nofollow" data-a="open">Lire sur ${esc(i.sourceNom)} ↗</a>` : ""}</div></article>`;
-}
-const pubSlot = () => `<div class="ad" data-slot="inline"></div>`;
-function avecPubs(cartes) { const o = []; cartes.forEach((c, k) => { if (k && k % 8 === 0) o.push(pubSlot()); o.push(c); }); return o.join(""); }
-
-function rendre() {
-  const q = $("#q").value.toLowerCase().trim();
-  const base = tous.filter(i => !P.hidden.includes(i.id) && (filtre === "all" || i.source === filtre));
-  const liste = base.filter(i => (i.titre + " " + i.texte).toLowerCase().includes(q));
-  const rech = q.length > 0;
-  $("#secReco").hidden = rech; $("#secNew").hidden = true;
-  if (!rech) {
-    $("#gReco").innerHTML = recommander(base, 6).map(i => carte(i, { raison: true })).join("");
-    const nouv = base.filter(i => i.ts > prevVisit && i.tags.some(t => P.follows.includes(t))).slice(0, 6);
-    if (nouv.length) { $("#secNew").hidden = false; $("#gNew").innerHTML = nouv.map(i => carte(i, { nouveau: true })).join(""); }
-  }
-  $("#hAll").textContent = rech ? `Résultats (${liste.length})` : "Tous les contenus";
-  $("#gAll").innerHTML = avecPubs(liste.map(i => carte(i)));
-  $("#msg").hidden = liste.length > 0; $("#msg").textContent = "Aucun résultat.";
-  montrerPubs();
-}
-function pills() {
-  const src = [["all", "Tout"], ...new Map(tous.map(i => [i.source, i.sourceNom]))];
-  $("#sources").innerHTML = src.map(([id, n]) => `<button class="pill" data-s="${id}" aria-pressed="${id === filtre}">${esc(n)}</button>`).join("");
-  $("#topics").innerHTML = Object.entries(TOPICS).map(([k, v]) => `<button class="pill" data-t="${k}" aria-pressed="${P.follows.includes(k)}">${P.follows.includes(k) ? "✓ " : "+ "}${v[0]}</button>`).join("");
-}
-document.addEventListener("click", e => {
-  const b = e.target.closest("[data-s],[data-t],[data-a]"); if (!b) return;
-  if (b.dataset.s) { filtre = b.dataset.s; pills(); rendre(); }
-  if (b.dataset.t) { const t = b.dataset.t; P.follows = P.follows.includes(t) ? P.follows.filter(x => x !== t) : [...P.follows, t]; save(); pills(); rendre(); }
-  if (b.dataset.a) {
-    const i = tous.find(x => x.id === b.closest(".card").dataset.id); if (!i) return;
-    if (b.dataset.a === "like") { const on = P.liked.includes(i.id); P.liked = on ? P.liked.filter(x => x !== i.id) : [...P.liked, i.id]; bump(i, on ? -3 : 3); save(); rendre(); }
-    if (b.dataset.a === "hide") { P.hidden.push(i.id); bump(i, -2); save(); rendre(); }
-    if (b.dataset.a === "open") { bump(i, 1.5); if (!P.clicked.includes(i.id)) P.clicked.push(i.id); save(); }
-  }
-});
-$("#q").oninput = rendre;
-
 /* ---------- 5. Publicités + consentement ---------- */
 let consent = store.get("consent", null), adsLoaded = false;
 function montrerPubs() {
@@ -158,20 +104,85 @@ $("#fAuth").onsubmit = async e => {
   else $("#dlg").close();
 };
 
-/* ---------- 7. Chargement des contenus ---------- */
-function ingerer(d) {
-  tous = d.items.map(i => ({ ...i, id: hash(i.source + i.titre), ts: new Date(i.date).getTime(), tags: [] }));
-  tous.forEach(i => i.tags = tagger(i));
-  $("#maj").textContent = `${d.total} contenus · mis à jour le ${fmt(d.maj)}`;
-  pills(); rendre();
+
+/* ---------- 4. Interface mobile ---------- */
+let tous=[],cat=null;
+const COUL={espace:["#1b1f4b","#6a3fa0"],oceans:["#0b4f6c","#20a4a8"],animaux:["#3d6b2f","#a3b83a"],climat:["#1f5f4a","#58a36c"],sante:["#8a1c3b","#e0566f"],histoire:["#6b3b1b","#d28a3c"],archeo:["#5a3a22","#c9a15a"],tech:["#22223a","#4a6cf7"],physique:["#3a1c71","#d76d77"],terre:["#7a2e0e","#e9803a"],_:["#e8794d","#7a3d9a"]};
+const imgOk=u=>/^https:\/\/[\w.\-\/?=&%,+~:@;]+$/.test(u||"");
+const fond=i=>{const [a,b]=COUL[i.tags[0]||"_"];return imgOk(i.image)?`background:linear-gradient(transparent 30%,#0008),url(${i.image}) center/cover,${a}`:`background:linear-gradient(160deg,${a},${b})`};
+const lienOk=u=>/^https?:\/\//i.test(u||"");
+const rw=(i,r)=>`<button class="rw" data-open="${i.id}"><span class="th" style="${fond(i)}"></span><span class="rt"><b>${esc(i.titre)}</b><small>${esc(r?raison(i)||i.sourceNom:i.sourceNom+(i.date?" · "+fmt(i.date):""))}</small></span></button>`;
+const cc=i=>`<button class="cc" data-open="${i.id}" style="${fond(i)}"><span class="chip">${esc(i.sourceNom)}</span><span class="ct">${esc(i.titre)}</span><span class="cx">${esc(i.texte)}</span><span class="go">Découvrir</span></button>`;
+const avecPubs=l=>{const o=[];l.forEach((c,k)=>{if(k&&k%6===0)o.push('<div class="ad" data-slot="inline" style="grid-column:1/-1"></div>');o.push(c)});return o.join("")};
+const visibles=()=>tous.filter(i=>!P.hidden.includes(i.id));
+
+function rendre(){
+  const base=visibles(), h=new Date().getHours();
+  $("#hello").textContent=h<18?"Bonjour":"Bonsoir";
+  const reco=recommander(base,12);
+  $("#car").innerHTML=reco.slice(0,5).map(cc).join("");
+  $("#gReco").innerHTML=avecPubs(reco.slice(5).map(i=>rw(i,true)));
+  const nouv=base.filter(i=>i.ts>prevVisit&&i.tags.some(t=>P.follows.includes(t))).slice(0,6);
+  $("#gNew").previousElementSibling.hidden=$("#gNew").hidden=!nouv.length;
+  $("#gNew").innerHTML=nouv.map(i=>rw(i,true)).join("");
+  // Du jour : un documentaire par jour, stable pour tous
+  const pool=[...base].sort((a,b)=>a.id<b.id?-1:1), n=pool.length, jour=Math.floor(Date.now()/864e5);
+  const du=k=>pool[((jour-k)%n+n)%n];
+  $("#dateJ").textContent=new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+  if(n){const j=du(0);$("#jour").innerHTML=`<button class="jour" data-open="${j.id}" style="${fond(j)}"><span>${esc(j.sourceNom)}</span><b>${esc(j.titre)}</b><span>${esc(j.texte.slice(0,120))}</span></button>`;
+   $("#avant").innerHTML=[1,2,3,4,5,6].map(k=>{const x=du(k);return `<button class="rw" data-open="${x.id}"><span class="th" style="${fond(x)}"></span><span class="rt"><b>${esc(x.titre)}</b><small>${new Date(Date.now()-k*864e5).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</small></span></button>`}).join("");}
+  // Recherche
+  $("#catGrid").innerHTML=Object.entries(TOPICS).map(([k,v])=>`<button class="cat" data-cat="${k}" style="${fond({tags:[k]})}">${v[0]}</button>`).join("");
+  const q=$("#q").value.toLowerCase().trim(), actif=q||cat;
+  $("#cats").hidden=!!actif; $("#hRes").hidden=!actif;
+  const res=actif?base.filter(i=>(!cat||i.tags.includes(cat))&&(i.titre+" "+i.texte).toLowerCase().includes(q)):[];
+  $("#hRes").textContent=(cat?TOPICS[cat][0]+" · ":"")+res.length+" résultat"+(res.length>1?"s":"");
+  $("#gRes").innerHTML=res.map(i=>rw(i)).join(""); $("#msg").hidden=!(actif&&!res.length);
+  // Bibliothèque
+  const aimes=tous.filter(i=>P.liked.includes(i.id));
+  $("#gLiked").innerHTML=aimes.map(i=>rw(i)).join(""); $("#noLiked").hidden=aimes.length>0;
+  pills(); montrerPubs();
 }
-const cache = store.get("cacheContenus", null);
-if (cache && cache.items && cache.items.length) ingerer(cache);                // affichage instantané
-else $("#gAll").innerHTML = '<div class="card sk"></div>'.repeat(6);          // squelette
-fetch("/.netlify/functions/documentaires").then(r => r.json()).then(d => {
-  if (!d.items || !d.items.length) throw new Error("vide");
-  store.set("cacheContenus", d); ingerer(d); save();
-}).catch(() => {
-  if (!tous.length) { $("#gAll").innerHTML = ""; $("#maj").textContent = ""; $("#msg").hidden = false; $("#msg").textContent = "Contenus momentanément indisponibles. Réessayez dans quelques minutes."; }
+function pills(){$("#topics").innerHTML=Object.entries(TOPICS).map(([k,v])=>`<button class="pill" data-t="${k}" aria-pressed="${P.follows.includes(k)}">${P.follows.includes(k)?"✓ ":"+ "}${v[0]}</button>`).join("")}
+function onglet(t){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id==="v-"+t));document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));if(t!=="search"){cat=null;$("#q").value=""}rendre();scrollTo(0,0)}
+function ouvrir(id){
+  const i=tous.find(x=>x.id===id); if(!i)return;
+  bump(i,1.5); if(!P.clicked.includes(id))P.clicked.push(id); save();
+  const corps=i.html||(i.corps||[i.texte]).filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join("");
+  const vid=/^https:\/\/www\.youtube-nocookie\.com\/embed\/[\w-]+$/.test(i.video||"")?`<iframe src="${i.video}" loading="lazy" allowfullscreen></iframe>`:"";
+  const aut=(i.auteurs||[]).join(", ");
+  const cap=i.credit?`<p class="cap">${esc(i.credit)}</p>`:"";
+  const pixel=/^https:\/\/counter\.theconversation\.com\//.test(i.pixel||"")?`<img src="${esc(i.pixel)}" width="1" height="1" alt="" style="border:0;position:absolute;opacity:0">`:"";
+  const cred=i.source==="conversation"
+   ?`<div class="cred"><p><b>Par ${esc(aut)}</b></p><p>Cet article est republié à partir de ${esc(i.sourceNom)} sous licence Creative Commons (Attribution – Pas de modification). Texte intégral, non modifié.</p>${lienOk(i.lienOriginal)?`<p><a href="${esc(i.lienOriginal)}" target="_blank" rel="noopener">Article original</a></p>`:""}</div>${pixel}`
+   :`<p class="cred">${aut?"Par "+esc(aut):"Par la rédaction Docu"}</p>`;
+  $("#detail").innerHTML=`<div class="hero" style="${fond(i)};position:relative"><button class="back" data-close>‹ Retour</button><span>${esc(i.sourceNom)}${i.date?" · "+esc(fmt(i.date)):""}</span><b>${esc(i.titre)}</b>${aut?`<span>Par ${esc(aut)}</span>`:""}</div>
+  <div class="body">${cap}${vid}${corps}<div class="acts"><button class="pill ${P.liked.includes(id)?"on":""}" data-like="${id}">♥ J'aime</button><button class="pill" data-hide="${id}">✕ Pas intéressé</button></div>${cred}</div>`;
+  $("#detail").hidden=false; $("#detail").scrollTop=0; document.body.style.overflow="hidden";
+}
+function fermer(){$("#detail").hidden=true;document.body.style.overflow="";rendre()}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-open],[data-tab],[data-cat],[data-t],[data-close],[data-like],[data-hide]"); if(!b)return;
+  const d=b.dataset;
+  if(d.open)ouvrir(d.open); else if(d.tab)onglet(d.tab); else if("close" in d)fermer();
+  else if(d.cat){cat=d.cat;rendre()} 
+  else if(d.t){P.follows=P.follows.includes(d.t)?P.follows.filter(x=>x!==d.t):[...P.follows,d.t];save();rendre()}
+  else if(d.like){const i=tous.find(x=>x.id===d.like),on=P.liked.includes(i.id);P.liked=on?P.liked.filter(x=>x!==i.id):[...P.liked,i.id];bump(i,on?-3:3);save();b.classList.toggle("on",!on)}
+  else if(d.hide){const i=tous.find(x=>x.id===d.hide);P.hidden.push(i.id);bump(i,-2);save();fermer()}
 });
-majBtn(); montrerPubs();
+$("#q").oninput=rendre;
+$("#q").addEventListener("keydown",e=>{if(e.key==="Escape"){cat=null;$("#q").value="";rendre()}});
+
+/* ---------- 7. Chargement ---------- */
+function ingerer(d,own){
+  const tout=[...(own||[]).map(o=>({source:"docu",sourceNom:"Rédaction Docu",lien:"",...o})),...d.items];
+  tous=tout.map(i=>({...i,texte:i.texte||"",id:hash(i.source+i.titre),ts:new Date(i.date).getTime(),tags:[]}));
+  tous.forEach(i=>i.tags=tagger(i)); rendre();
+}
+$("#gReco").innerHTML='<div class="sk"></div>'.repeat(5);
+const json=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
+Promise.all([json("data/articles.json"),json("contenus.json")]).then(([d,own])=>{
+  ingerer(d&&d.items?d:{items:[]},Array.isArray(own)?own:[]); save();
+  if(!tous.length)$("#gReco").innerHTML='<p class="mut">Les premiers contenus arrivent bientôt.</p>';
+});
+majBtn();

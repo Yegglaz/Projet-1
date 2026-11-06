@@ -1,0 +1,8 @@
+{
+  "archive": [
+    { "nom": "NASA", "q": "collection:nasa AND mediatype:movies", "max": 500, "domainePublic": true },
+    { "nom": "Documentaires français", "q": "mediatype:movies AND subject:(documentaire OR documentary) AND language:(French OR fre OR fra) AND licenseurl:(*creativecommons.org*)", "max": 500 },
+    { "nom": "Documentaires", "q": "mediatype:movies AND subject:documentary AND licenseurl:(*creativecommons.org*)", "max": 800 }
+  ],
+  "youtube": []
+}

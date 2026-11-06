@@ -1,3 +1,9 @@
+const C = window.CONFIG || {};
+const $ = s => document.querySelector(s);
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} } };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = d => { const x = new Date(d); return isNaN(x) ? "" : x.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) };
+
 /* ---------- 1. Thématiques (détection par mots-clés) ---------- */
 const TOPICS = {
   espace: ["Espace", /espace|astro|galaxie|plan[èe]te|nasa|[ée]toile|mars\b|lune|trou noir|t[ée]lescope|cosm|satellite|solaire/i],

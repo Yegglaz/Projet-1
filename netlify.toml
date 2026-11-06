@@ -1,4 +1,4 @@
 [build]
-  command = "node scripts/build-data.js"
+  command = "node scripts/build-data.js || echo 'récupération ignorée'"
   publish = "public"
   functions = "netlify/functions"

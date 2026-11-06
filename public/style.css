@@ -57,3 +57,4 @@ dialog input{width:100%;margin:8px 0;padding:11px;border:1px solid var(--line);b
 .body h2,.body h3{margin:22px 0 10px;font-size:20px}.body figure{margin:16px 0}.body figure img,.body>img{width:100%;height:auto;border-radius:14px}
 .body figcaption,.cap{font-size:12px;color:var(--mut);margin-top:6px}.body blockquote{border-left:4px solid var(--acc);padding-left:14px;margin:14px 0;color:var(--mut)}
 .body ul,.body ol{margin:0 0 14px 22px}.cred a{color:var(--mut)}
+[hidden]{display:none!important}

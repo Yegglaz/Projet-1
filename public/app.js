@@ -36,7 +36,7 @@ const bump = (i, v) => i.tags.forEach(t => P.w[t] = (P.w[t] || 0) + v);
 function score(i) {
   const age = (Date.now() - i.ts) / 864e5, fraicheur = isNaN(age) ? 0.2 : Math.exp(-age / 30);
   let aff = i.tags.reduce((a, t) => a + (P.w[t] || 0) + (P.follows.includes(t) ? 3 : 0), 0) / Math.sqrt(Math.max(1, i.tags.length));
-  return aff + fraicheur + Math.random() * 0.6 - (P.clicked.includes(i.id) ? 1.5 : 0);
+  return aff + fraicheur + (i.genre === "documentaire" ? 0.7 : 0) + Math.random() * 0.6 - (P.clicked.includes(i.id) ? 1.5 : 0);
 }
 function recommander(items, n) {
   const pool = items.filter(i => !P.hidden.includes(i.id)).map(i => ({ i, s: score(i) })), out = [], vu = {};
@@ -72,16 +72,16 @@ let tous = [], byId = new Map(), cat = null, typ = "all", limite = 48, H = null;
 const visibles = () => tous.filter(i => !P.hidden.includes(i.id));
 const lienOk = u => /^https?:\/\//i.test(u || "");
 const play = s => `<i class="pl${s ? " s" : ""}"></i>`;
-const meta = i => [i.sourceNom, i.langue && i.langue !== "FR" ? i.langue : "", i.date ? fmt(i.date) : ""].filter(Boolean).join(" · ");
+const meta = i => [i.sourceNom, i.duree ? i.duree + " min" : "", i.langue && i.langue !== "FR" ? i.langue : "", i.date ? fmt(i.date) : ""].filter(Boolean).join(" · ");
 const rw = (i, r) => `<button class="rw" data-open="${i.id}"><span class="th" style="${fond(i)}">${i.video ? play(1) : ""}</span><span class="rt"><b>${esc(i.titre)}</b><small>${esc(r ? raison(i) || meta(i) : meta(i))}</small></span></button>`;
-const cc = i => `<button class="cc" data-open="${i.id}" style="${fond(i)}"><span class="chip">${i.video ? "Vidéo" : "Article"} · ${esc(i.sourceNom)}</span><span class="ct">${esc(i.titre)}</span><span class="cx">${esc(i.texte)}</span><span class="go">${i.video ? "▶ Regarder" : "Découvrir"}</span></button>`;
+const cc = i => `<button class="cc" data-open="${i.id}" style="${fond(i)}"><span class="chip">${i.genre === "documentaire" ? "Documentaire" : i.genre === "archive" ? "Film d'archive" : i.video ? "Clip" : "Article"} · ${esc(i.sourceNom)}</span><span class="ct">${esc(i.titre)}</span><span class="cx">${esc(i.texte)}</span><span class="go">${i.video ? "▶ Regarder" : "Découvrir"}</span></button>`;
 const mc = i => `<button class="mc" data-open="${i.id}"><span class="pic" style="${fond(i)}">${play()}</span><b>${esc(i.titre)}</b><small>${esc(i.sourceNom)}</small></button>`;
 const lst = ids => ids.map(x => byId.get(x)).filter(i => i && !P.hidden.includes(i.id));
 const avecPubs = l => { const o = []; l.forEach((c, k) => { if (k && k % 9 === 0) o.push('<div class="ad" data-slot="inline" style="grid-column:1/-1"></div>'); o.push(c) }); return o.join(""); };
 
 function calculerAccueil() {
   const base = visibles(), car = recommander(base, 5), vus = new Set(car.map(i => i.id));
-  H = { car: car.map(i => i.id), vid: recommander(base.filter(i => i.video && !vus.has(i.id)), 10).map(i => i.id), reco: recommander(base.filter(i => !vus.has(i.id)), 12).map(i => i.id), art: recommander(base.filter(i => !i.video), 6).map(i => i.id) };
+  H = { car: car.map(i => i.id), vid: recommander(base.filter(i => i.genre === "documentaire" && !vus.has(i.id)), 10).map(i => i.id), reco: recommander(base.filter(i => !vus.has(i.id)), 12).map(i => i.id), art: recommander(base.filter(i => !i.video), 6).map(i => i.id) };
 }
 function rendreAccueil() {
   if (!H) calculerAccueil();
@@ -100,12 +100,13 @@ function rendreJour() {
   const j = du(0); $("#jour").innerHTML = `<button class="jour" data-open="${j.id}" style="${fond(j)}"><span>${esc(j.sourceNom)}</span><b>${esc(j.titre)}</b><span>${esc(j.texte.slice(0, 130))}</span></button>`;
   $("#avant").innerHTML = [1, 2, 3, 4, 5, 6].map(k => { const x = du(k); return `<button class="rw" data-open="${x.id}"><span class="th" style="${fond(x)}">${x.video ? play(1) : ""}</span><span class="rt"><b>${esc(x.titre)}</b><small>${new Date(Date.now() - k * 864e5).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</small></span></button>` }).join("");
 }
+const okTyp = i => typ === "all" || (typ === "doc" && i.genre === "documentaire") || (typ === "clip" && i.video && i.genre !== "documentaire") || (typ === "article" && !i.video);
 function rendreRecherche() {
   $("#catGrid").innerHTML = Object.entries(TOPICS).map(([k, v]) => `<button class="cat" data-cat="${k}" style="${fond({ tags: [k], id: "i" + k })}"><span>${v[0]}</span></button>`).join("");
   $$("[data-typ]").forEach(b => b.setAttribute("aria-pressed", b.dataset.typ === typ));
   const q = $("#q").value.toLowerCase().trim(), actif = q || cat || typ !== "all";
   $("#cats").hidden = !!actif; $("#hRes").hidden = !actif;
-  const res = actif ? visibles().filter(i => (!cat || i.tags.includes(cat)) && (typ === "all" || (typ === "video") === !!i.video) && (!q || (i.titre + " " + i.texte + " " + (i.auteurs || []).join(" ")).toLowerCase().includes(q))) : [];
+  const res = actif ? visibles().filter(i => (!cat || i.tags.includes(cat)) && okTyp(i) && (!q || (i.titre + " " + i.texte + " " + (i.auteurs || []).join(" ")).toLowerCase().includes(q))) : [];
   $("#hRes").textContent = (cat ? TOPICS[cat][0] + " · " : "") + res.length + " résultat" + (res.length > 1 ? "s" : "");
   $("#gRes").innerHTML = res.slice(0, limite).map(i => rw(i)).join("");
   $("#more").hidden = res.length <= limite; $("#msg").hidden = !(actif && !res.length);
@@ -204,7 +205,8 @@ $("#bOut").onclick = async () => { if (sb && user) await sb.auth.signOut(); user
 $("#gReco").innerHTML = '<div class="sk"></div>'.repeat(5);
 const json = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
 Promise.all([json("data/articles.json"), json("data/videos.json"), json("contenus.json")]).then(([a, v, own]) => {
-  const items = [...(Array.isArray(own) ? own : []).map(o => ({ source: "docu", sourceNom: "Rédaction Docu", ...o })), ...((a && a.items) || []), ...((v && v.items) || [])];
+  const complet = i => i.source === "archive" ? { sourceNom: "Internet Archive", image: `https://archive.org/services/img/${i.ref}`, video: `https://archive.org/embed/${i.ref}`, ...i } : i.source === "youtube" ? { image: `https://i.ytimg.com/vi/${i.ref}/hqdefault.jpg`, video: `https://www.youtube-nocookie.com/embed/${i.ref}`, ...i } : i;
+  const items = [...(Array.isArray(own) ? own : []).map(o => ({ source: "docu", sourceNom: "Rédaction Docu", ...o })), ...((a && a.items) || []), ...((v && v.items) || []).map(complet)];
   tous = items.map(i => ({ ...i, titre: i.titre || "", texte: i.texte || "", id: hash(i.source + (i.ref || i.titre)), ts: new Date(i.date).getTime(), tags: [] })).filter(i => i.titre);
   tous.forEach(i => { i.tags = tagger(i); byId.set(i.id, i); });
   tous = [...byId.values()]; H = null; rendre(); save();

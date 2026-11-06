@@ -10,11 +10,11 @@ const FEEDS = [
   "https://theconversation.com/fr/sante/articles.atom",
   "https://theconversation.com/fr/sciences-et-technologie/articles.atom",
 ];
-const MAX_ART = 40, MAX_VID = 1500;
+const MAX_ART = 40, MAX_VID = 12000;
 const SCIENCE = /(scien|espace|astro|plan[èe]te|[ée]toile|oc[ée]an|animal|esp[èe]ce|climat|biodivers|for[êe]t|cerveau|sant[ée]|virus|g[ée]n[ée]tique|cellule|physique|chimie|[ée]nergie|nucl[ée]aire|dinosaure|fossile|arch[ée]olog|pr[ée]histoire|histoire|volcan|s[ée]isme|g[ée]olog|technolog|intelligence artificielle|robot|quantique|nature|m[ée]t[ée]o|glacier|insecte|oiseau|mer\b)/i;
 const BALISES = new Set(["p","h2","h3","h4","ul","ol","li","blockquote","strong","em","b","i","br","figure","figcaption","img"]);
 const IMG_OK = /^https:\/\/images\.theconversation\.com\//;
-const LIC_OK = /creativecommons\.org\/(licenses\/(by|by-sa|by-nd)\/|publicdomain\/)/i;   // exclut les licences "NC" (pas d'usage commercial)
+const LIC_OK = /creativecommons\.org\/(licenses\/(by|by-sa|by-nd|publicdomain)\/|publicdomain\/)/i;   // exclut les licences "NC" (pas d'usage commercial)
 
 const get = async (u) => {
   const r = await fetch(u, { headers: { "User-Agent": "Mozilla/5.0 (compatible; DocuBot/1.0)" }, signal: AbortSignal.timeout(30000) });
@@ -24,6 +24,7 @@ const get = async (u) => {
 const texte = (s) => cheerio.load("<div>" + (Array.isArray(s) ? s.join(" ") : String(s || "")) + "</div>")("div").text().replace(/\s+/g, " ").trim();
 const coupe = (t, n) => (t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : t);
 const un = (v) => (Array.isArray(v) ? v[0] : v);
+const duree = (r) => { r = String(un(r) || "").trim(); if (!r) return 0; let m = r.match(/^(?:(\d+):)?(\d+):(\d+)/); if (m) return Math.round(((+m[1] || 0) * 3600 + +m[2] * 60 + +m[3]) / 60); m = r.match(/^(\d+(?:\.\d+)?)/); return m ? Math.round(+m[1] > 400 ? +m[1] / 60 : +m[1]) : 0; };
 
 /* ---------- The Conversation ---------- */
 function nettoyer($, racine) {
@@ -86,8 +87,8 @@ const licence = (u) => {
 };
 const langue = (l) => { const s = String(un(l) || "").toLowerCase(); return /^(fr|fre|fra|french)/.test(s) ? "FR" : /^(en|eng|english)/.test(s) ? "EN" : ""; };
 async function archive(src) {
-  const out = [], champs = ["identifier", "title", "description", "creator", "date", "publicdate", "licenseurl", "language"].map((f) => "fl%5B%5D=" + f).join("&");
-  for (let p = 1; out.length < src.max && p <= 10; p++) {
+  const out = [], champs = ["identifier", "title", "description", "creator", "date", "publicdate", "licenseurl", "language", "runtime"].map((f) => "fl%5B%5D=" + f).join("&");
+  for (let p = 1; out.length < src.max && p <= 25; p++) {
     const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(src.q)}&${champs}&sort%5B%5D=downloads+desc&rows=200&page=${p}&output=json`;
     let docs;
     try { docs = JSON.parse(await get(url)).response.docs || []; } catch (e) { console.log("archive KO:", src.nom, "page", p, e.message); break; }
@@ -97,12 +98,13 @@ async function archive(src) {
       if (!/^[\w.\-]+$/.test(id) || !titre) continue;
       const lic = String(un(d.licenseurl) || "");
       if (!src.domainePublic && !LIC_OK.test(lic)) continue;
+      const mins = duree(d.runtime);
+      if (src.minMinutes && mins && mins < src.minMinutes) continue;   // on écarte les extraits trop courts
       const desc = texte(d.description), dateBrute = un(d.date) || un(d.publicdate) || "";
       out.push({
-        source: "archive", ref: id, sourceNom: "Internet Archive", titre: coupe(titre, 140), texte: coupe(desc, 300),
-        corps: desc ? [coupe(desc, 1800)] : [], date: /^\d{4}/.test(dateBrute) ? String(dateBrute).slice(0, 10) : "",
+        source: "archive", ref: id, duree: mins, genre: src.genre || "documentaire", titre: coupe(titre, 140), texte: coupe(desc, 500),
+        date: /^\d{4}/.test(dateBrute) ? String(dateBrute).slice(0, 10) : "",
         auteurs: [texte(un(d.creator))].filter(Boolean), langue: langue(d.language),
-        image: `https://archive.org/services/img/${id}`, video: `https://archive.org/embed/${id}`,
         credit: src.domainePublic ? src.nom + " — domaine public" : licence(lic),
       });
       if (out.length >= src.max) break;
@@ -121,7 +123,7 @@ async function youtube(ch) {
       const e = $(el), id = e.find("yt\\:videoId").text().trim();
       if (!/^[\w-]{6,20}$/.test(id)) return;
       items.push({
-        source: "youtube", ref: id, sourceNom: ch.nom, titre: coupe(texte(e.find("title").first().text()), 140),
+        source: "youtube", ref: id, genre: "documentaire", sourceNom: ch.nom, titre: coupe(texte(e.find("title").first().text()), 140),
         texte: coupe(texte(e.find("media\\:description").text()), 300), date: e.find("published").text().slice(0, 10),
         image: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`, video: `https://www.youtube-nocookie.com/embed/${id}`, credit: "Vidéo de " + ch.nom,
       });
@@ -143,7 +145,7 @@ async function main() {
   const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, "sources.json"), "utf8"));
   ecrire("articles.json", await conversation());
   let vids = [];
-  for (const s of cfg.archive || []) vids.push(...(await archive(s)));
+  for (const lot of await Promise.all((cfg.archive || []).map(archive))) vids.push(...lot);
   for (const c of cfg.youtube || []) vids.push(...(await youtube(c)));
   const vu = new Set();
   vids = vids.filter((v) => (vu.has(v.source + v.ref) ? false : vu.add(v.source + v.ref))).slice(0, MAX_VID);

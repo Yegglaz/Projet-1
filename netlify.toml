@@ -2,3 +2,13 @@
   command = "node scripts/build-data.js || echo 'récupération ignorée'"
   publish = "public"
   functions = "netlify/functions"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=300"

@@ -1,0 +1,12 @@
+{
+ "espace": "espace|astro|galaxie|plan[èe]te|nasa|apollo|[ée]toile|trou noir|t[ée]lescope|cosm|satellite|solaire|fus[ée]e|astronaute|orbite",
+ "animaux": "animal|faune|esp[èe]ce|oiseau|requin|baleine|insecte|f[ée]lin|singe|loup|ours|pr[ée]dateur|zoolog|mammif",
+ "oceans": "oc[ée]an|\\bmer\\b|marin|corail|poisson|plong[ée]e|dauphin",
+ "climat": "climat|r[ée]chauffement|carbone|pollution|[ée]colog|glacier|s[ée]cheresse|biodiversit|for[êe]t",
+ "sante": "sant[ée]|cerveau|m[ée]dic|cancer|virus|vaccin|maladie|sommeil|g[ée]n[ée]tique|\\badn\\b|neuro",
+ "histoire": "histoire|antique|[ée]gypt|romain|m[ée]di[ée]val|guerre|pharaon|civilisation|pr[ée]histoire",
+ "archeo": "arch[ée]olog|fouille|momie|fossile|dinosaure|pal[ée]ontolog|n[ée]andertal",
+ "tech": "intelligence artificielle|robot|ordinateur|technolog|num[ée]rique|quantique|batterie|drone|internet|informatique",
+ "physique": "physique|particule|atome|chimie|mati[èe]re|laser|[ée]nergie|nucl[ée]aire",
+ "terre": "volcan|s[ée]isme|tremblement|g[ée]olog|montagne|d[ée]sert|m[ée]t[ée]o|temp[êe]te|tsunami"
+}

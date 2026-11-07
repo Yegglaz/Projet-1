@@ -1,17 +1,75 @@
 {
-  "archive": [
-    { "nom": "Documentaires français", "genre": "documentaire", "minMinutes": 20, "max": 1500,
-      "q": "mediatype:movies AND subject:(documentaire OR documentary OR documentaires) AND language:(French OR fre OR fra) AND licenseurl:(*creativecommons.org*)" },
-    { "nom": "Documentaires nature & science", "genre": "documentaire", "minMinutes": 20, "max": 2500,
-      "q": "mediatype:movies AND subject:documentary AND subject:(nature OR wildlife OR animals OR science OR space OR ocean OR environment OR archaeology OR technology OR health OR biology OR physics) AND licenseurl:(*creativecommons.org*)" },
-    { "nom": "Documentaires histoire & société", "genre": "documentaire", "minMinutes": 20, "max": 2500,
-      "q": "mediatype:movies AND subject:documentary AND subject:(history OR society OR culture OR politics OR war OR travel OR art OR music OR economy) AND licenseurl:(*creativecommons.org*)" },
-    { "nom": "Documentaires (autres)", "genre": "documentaire", "minMinutes": 20, "max": 3000,
-      "q": "mediatype:movies AND subject:documentary AND licenseurl:(*creativecommons.org*)" },
-    { "nom": "Films d'archive (domaine public)", "genre": "archive", "minMinutes": 8, "max": 2500,
-      "q": "collection:prelinger AND mediatype:movies AND licenseurl:(*publicdomain*)" },
-    { "nom": "NASA", "genre": "clip", "max": 150, "domainePublic": true,
-      "q": "collection:nasa AND mediatype:movies" }
+ "archive": [
+  {
+   "nom": "Documentaires français",
+   "genre": "documentaire",
+   "minMinutes": 20,
+   "max": 1500,
+   "q": "mediatype:movies AND subject:(documentaire OR documentary OR documentaires) AND language:(French OR fre OR fra) AND licenseurl:(*creativecommons.org*)"
+  },
+  {
+   "nom": "Documentaires nature & science",
+   "genre": "documentaire",
+   "minMinutes": 20,
+   "max": 2500,
+   "q": "mediatype:movies AND subject:documentary AND subject:(nature OR wildlife OR animals OR science OR space OR ocean OR environment OR archaeology OR technology OR health OR biology OR physics) AND licenseurl:(*creativecommons.org*)"
+  },
+  {
+   "nom": "Documentaires histoire & société",
+   "genre": "documentaire",
+   "minMinutes": 20,
+   "max": 2500,
+   "q": "mediatype:movies AND subject:documentary AND subject:(history OR society OR culture OR politics OR war OR travel OR art OR music OR economy) AND licenseurl:(*creativecommons.org*)"
+  },
+  {
+   "nom": "Documentaires (autres)",
+   "genre": "documentaire",
+   "minMinutes": 20,
+   "max": 3000,
+   "q": "mediatype:movies AND subject:documentary AND licenseurl:(*creativecommons.org*)"
+  },
+  {
+   "nom": "Films d'archive (domaine public)",
+   "genre": "archive",
+   "minMinutes": 8,
+   "max": 2500,
+   "q": "collection:prelinger AND mediatype:movies AND licenseurl:(*publicdomain*)"
+  },
+  {
+   "nom": "NASA",
+   "genre": "clip",
+   "max": 150,
+   "domainePublic": true,
+   "q": "collection:nasa AND mediatype:movies"
+  }
+ ],
+ "youtube": [],
+ "wikipedia": {
+  "max": 12000,
+  "profondeur": 2,
+  "qualite": [
+   "Catégorie:Article de qualité",
+   "Catégorie:Bon article"
   ],
-  "youtube": []
+  "categories": [
+   "Catégorie:Astronomie",
+   "Catégorie:Biologie",
+   "Catégorie:Zoologie",
+   "Catégorie:Botanique",
+   "Catégorie:Géologie",
+   "Catégorie:Océanographie",
+   "Catégorie:Écologie",
+   "Catégorie:Paléontologie",
+   "Catégorie:Préhistoire",
+   "Catégorie:Archéologie",
+   "Catégorie:Médecine",
+   "Catégorie:Neurosciences",
+   "Catégorie:Physique",
+   "Catégorie:Chimie",
+   "Catégorie:Climatologie",
+   "Catégorie:Volcanologie",
+   "Catégorie:Histoire",
+   "Catégorie:Technologie"
+  ]
+ }
 }

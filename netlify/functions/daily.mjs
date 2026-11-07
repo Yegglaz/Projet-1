@@ -5,4 +5,4 @@ export default async () => {
   await fetch(hook, { method: "POST" });
   return new Response("ok");
 };
-export const config = { schedule: "@daily" };
+export const config = { schedule: "0 5 * * *" };

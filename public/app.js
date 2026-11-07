@@ -250,6 +250,27 @@ $("#fSb").onsubmit = async e => {
 $("#fLocal").onsubmit = e => { e.preventDefault(); local = { nom: $("#prenom").value.trim() }; store.set("local", local); majBtn(); majAlert(); $("#dlg").close(); };
 $("#bOut").onclick = async () => { if (sb && user) await sb.auth.signOut(); user = null; local = null; aboActif = false; store.set("local", null); majBtn(); majAlert(); $("#dlg").close(); };
 
+/* ===== 9b. Mode direct : va chercher en ligne des articles Wikipédia (texte libre CC BY-SA) si le catalogue est trop petit ===== */
+const THEMES = ["astronomie", "océan", "faune", "climat", "cerveau", "histoire", "paléontologie", "robotique", "physique", "volcan", "médecine", "géologie", "écologie", "biologie", "chimie", "archéologie"];
+async function wikiDirect(cible) {
+  const base = "https://fr.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&prop=extracts%7Cpageimages%7Cpageprops&exintro=1&explaintext=1&exlimit=20&piprop=thumbnail&pithumbsize=480&pilimit=20&ppprop=disambiguation&generator=search&gsrnamespace=0&gsrlimit=20&gsrsearch=";
+  let ajoutes = 0;
+  for (let off = 0; off < 400 && ajoutes < cible; off += 20) {
+    for (let k = 0; k < THEMES.length && ajoutes < cible; k += 4) {
+      const lots = await Promise.all(THEMES.slice(k, k + 4).map(t => json(base + encodeURIComponent(t) + "&gsroffset=" + off)));
+      const items = [];
+      lots.forEach(j => ((j && j.query && j.query.pages) || []).forEach(p => {
+        const ex = (p.extract || "").replace(/\s+/g, " ").trim();
+        if (ex.length < 350 || (p.pageprops && "disambiguation" in p.pageprops) || /^Liste /.test(p.title)) return;
+        const im = p.thumbnail && p.thumbnail.source;
+        items.push({ source: "wikipedia", ref: String(p.pageid), titre: p.title, texte: ex.slice(0, 450), image: im && /^https:\/\/upload\.wikimedia\.org\//.test(im) ? im : "", genre: "ecrit" });
+      }));
+      const avant = tous.length; ajouter(items); ajoutes += tous.length - avant;
+      compteur(); if ($("#v-search").classList.contains("on")) rendreRecherche();
+    }
+  }
+}
+
 /* ===== 9. Chargement rapide par tranches ===== */
 $("#gReco").innerHTML = '<div class="sk"></div>'.repeat(5);
 const json = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
@@ -272,6 +293,7 @@ Promise.all([json("data/manifest.json"), json("data/articles.json"), json("conte
   const premiers = await Promise.all([nv ? json("data/videos-1.json") : null, nw ? json("data/wiki-1.json") : null]);
   premiers.forEach(d => d && d.items && ajouter(d.items));
   nBase = tous.length; H = null; rendre(); save(); ouvrirAttendu();
+  if (((m.wiki && m.wiki.total) || 0) < 1000) wikiDirect(1500);
   if (!tous.length) $("#gReco").innerHTML = '<p class="mut">Les premiers contenus arrivent bientôt.</p>';
   for (let k = 2; k <= Math.max(nv, nw); k++) {
     const ds = await Promise.all([k <= nv ? json(`data/videos-${k}.json`) : null, k <= nw ? json(`data/wiki-${k}.json`) : null]);

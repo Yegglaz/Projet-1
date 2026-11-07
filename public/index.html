@@ -6,10 +6,10 @@
 <link rel="preconnect" href="https://archive.org"><link rel="preconnect" href="https://upload.wikimedia.org"><link rel="preconnect" href="https://fr.wikipedia.org"><link rel="dns-prefetch" href="https://images.theconversation.com">
 <link rel="stylesheet" href="style.css"></head><body>
 <nav class="tabs" id="tabs"><div class="brand"><span class="logo">docu</span></div>
-  <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9M4.5 4.5a10.6 10.6 0 0 0 0 15M19.5 4.5a10.6 10.6 0 0 1 0 15"/></svg><span>Accueil</span></button>
-  <button data-tab="today"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span>Du jour</span></button>
-  <button data-tab="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span>Recherche</span></button>
-  <button data-tab="lib"><svg viewBox="0 0 24 24"><path d="M5 4v16M10 4v16M15.5 5l4 14"/></svg><span>Bibliothèque</span></button>
+  <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9M4.5 4.5a10.6 10.6 0 0 0 0 15M19.5 4.5a10.6 10.6 0 0 1 0 15"/></svg><span data-i="nh">Accueil</span></button>
+  <button data-tab="today"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span data-i="nt">Du jour</span></button>
+  <button data-tab="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span data-i="ns">Recherche</span></button>
+  <button data-tab="lib"><svg viewBox="0 0 24 24"><path d="M5 4v16M10 4v16M15.5 5l4 14"/></svg><span data-i="nl">Bibliothèque</span></button>
 </nav>
 <main id="app">
   <section id="v-home" class="view on">
@@ -17,38 +17,52 @@
       <h1 id="hello">Bonjour</h1><p id="count">De nouveaux documentaires à découvrir, chaque jour.</p></div>
     <div class="car" id="car"></div>
     <div class="ad" data-slot="banner"></div>
-    <div id="sVid"><h2>Documentaires à regarder</h2><div class="hs" id="hsVid"></div></div>
-    <div id="sNew" hidden><h2>Nouveautés de vos sujets</h2><div class="rows" id="gNew"></div></div>
-    <h2>Pour vous</h2><div class="rows" id="gReco"></div>
-    <div id="sArt"><h2>Documentaires écrits</h2><div class="rows" id="gArt"></div></div>
+    <div id="sVid"><h2 data-i="sD">Documentaires à regarder</h2><div class="hs" id="hsVid"></div></div>
+    <div id="sNew" hidden><h2 data-i="sN">Nouveautés de vos sujets</h2><div class="rows" id="gNew"></div></div>
+    <h2 data-i="sF">Pour vous</h2><div class="rows" id="gReco"></div>
+    <div id="sArt"><h2 data-i="sW">Documentaires écrits</h2><div class="rows" id="gArt"></div></div>
   </section>
-  <section id="v-today" class="view"><h1>Aujourd'hui</h1><p class="mut" id="dateJ"></p>
-    <div id="jour"></div><h2>Les jours précédents</h2><div class="rows" id="avant"></div></section>
-  <section id="v-search" class="view"><h1>Recherche</h1>
-    <input id="q" type="search" placeholder="Documentaires, sujets, auteurs…" aria-label="Rechercher">
-    <div class="pills" style="margin-top:12px"><button class="pill" data-typ="all" aria-pressed="true">Tout</button><button class="pill" data-typ="doc" aria-pressed="false">Documentaires</button><button class="pill" data-typ="article" aria-pressed="false">Écrits</button><button class="pill" data-typ="clip" aria-pressed="false">Archives & clips</button></div>
-    <div id="cats"><h2>Catégories</h2><div class="cats" id="catGrid"></div></div>
+  <section id="v-today" class="view"><h1 data-i="td">Aujourd'hui</h1><p class="mut" id="dateJ"></p>
+    <div id="jour"></div><h2 data-i="pv">Les jours précédents</h2><div class="rows" id="avant"></div></section>
+  <section id="v-search" class="view"><h1 data-i="sh">Recherche</h1>
+    <input id="q" type="search" data-ph="sph" placeholder="Documentaires, sujets, auteurs…" aria-label="Rechercher">
+    <div class="pills" style="margin-top:12px"><button class="pill" data-typ="all" aria-pressed="true" data-i="cA">Tout</button><button class="pill" data-typ="doc" aria-pressed="false" data-i="cD">Documentaires</button><button class="pill" data-typ="article" aria-pressed="false" data-i="cW">Écrits</button><button class="pill" data-typ="clip" aria-pressed="false" data-i="cC">Archives & clips</button><button class="pill" data-typ="cc" aria-pressed="false" data-i="cS">Sous-titrés</button></div>
+    <div id="cats"><h2 data-i="cats">Catégories</h2><div class="cats" id="catGrid"></div></div>
     <h2 id="hRes" hidden></h2><div class="rows" id="gRes"></div>
-    <button id="more" class="btn" hidden>Afficher plus</button><p id="msg" class="mut" hidden>Aucun résultat.</p></section>
-  <section id="v-lib" class="view"><h1>Bibliothèque</h1>
+    <button id="more" class="btn" hidden data-i="more">Afficher plus</button><p id="msg" class="mut" hidden data-i="none">Aucun résultat.</p></section>
+  <section id="v-lib" class="view"><h1 data-i="lh">Bibliothèque</h1>
     <div class="acct"><span id="acct">Non connecté</span><button class="authBtn btn">Connexion</button></div>
     <div id="alertes" class="acct" style="margin-top:10px" hidden><span id="alTxt">Alertes email</span><button class="btn" id="btnAlert" style="margin:0">Activer</button></div>
-    <h2>Sujets suivis</h2><div class="pills" id="topics"></div>
-    <h2>Mes coups de cœur</h2><div class="rows" id="gLiked"></div><p id="noLiked" class="mut">Appuyez sur ♥ dans un documentaire pour le retrouver ici.</p>
-    <p class="foot"><a href="mentions-legales.html">Mentions légales</a> · <a href="confidentialite.html">Confidentialité</a> · <a href="#" id="cookies">Gérer les cookies</a></p></section>
+    <h2 data-i="lt">Sujets suivis</h2><div class="pills" id="topics"></div>
+    <h2 data-i="ll">Mes coups de cœur</h2><div class="rows" id="gLiked"></div><p id="noLiked" class="mut" data-i="le">Appuyez sur ♥ dans un documentaire pour le retrouver ici.</p>
+    <p class="foot"><a href="mentions-legales.html" data-i="f1">Mentions légales</a> · <a href="confidentialite.html" data-i="f2">Confidentialité</a> · <a href="#" id="cookies" data-i="f3">Gérer les cookies</a></p></section>
 </main>
 <div id="detail" class="detail" hidden></div>
+
+<dialog id="dSet"><h3 data-i="st">Paramètres</h3>
+  <h4 data-i="sAcc">Compte</h4><div class="acct"><span id="acct2">Non connecté</span><button class="btn" id="bAcc" style="margin:0" data-i="sLog">Connexion / Inscription</button></div>
+  <h4 data-i="sLang">Langue</h4><select id="selLang" aria-label="Langue"><option value="fr">Français</option><option value="en">English</option><option value="de">Deutsch</option><option value="es">Español</option><option value="it">Italiano</option><option value="pt">Português</option></select>
+  <p class="mut" style="margin-top:6px" data-i="sLangN">La langue change l'interface ; les documentaires gardent leur langue d'origine.</p>
+  <h4 data-i="sMode">Mode</h4><div class="pills" id="pMode"><button class="pill" data-mode="auto" data-i="mA">Auto</button><button class="pill" data-mode="light" data-i="mL">Clair</button><button class="pill" data-mode="dark" data-i="mD">Sombre</button></div>
+  <h4 data-i="sCol">Couleur de l'interface</h4><div class="sw" id="pCol"></div>
+  <h4 data-i="sTxt">Taille du texte</h4><div class="pills" id="pTxt"><button class="pill" data-zoom="0">A−</button><button class="pill" data-zoom="1">A</button><button class="pill" data-zoom="2">A+</button></div>
+  <h4 data-i="sVid">Vidéos</h4><label class="opt"><input type="checkbox" id="cbSub"><span data-i="sSub">Sous-titres français quand disponibles</span></label><label class="opt"><input type="checkbox" id="cbMot"><span data-i="sMot">Réduire les animations</span></label>
+  <div class="row"><button type="button" class="pill" id="bReset" data-i="sRes">Réinitialiser</button><button type="button" class="pill on" id="bSetX" data-i="close">Fermer</button></div></dialog>
+
 <dialog id="dlg"><h3 id="dTitre">Connexion</h3><p id="dMsg" class="err" hidden></p>
-  <form id="fSb" hidden><p class="mut">Retrouvez vos goûts sur tous vos appareils et recevez les nouveautés par email.</p>
-    <input id="em" type="email" placeholder="Email" required autocomplete="email"><input id="pw" type="password" placeholder="Mot de passe (8 caractères min.)" required minlength="8" autocomplete="current-password">
-    <label id="optinWrap" class="opt" hidden><input type="checkbox" id="optin"> Je souhaite recevoir par email les nouveaux documentaires (désinscription en un clic).</label>
+  <form id="fSb" hidden><p class="mut" data-i="aI">Retrouvez vos goûts sur tous vos appareils et recevez les nouveautés par email.</p>
+    <div id="pseudoWrap" hidden><input id="pseudo" type="text" data-ph="aP" placeholder="Pseudo (3 à 20 caractères)" maxlength="20" autocomplete="nickname"></div>
+    <input id="em" type="email" data-ph="aE" placeholder="Email" required autocomplete="email"><input id="pw" type="password" data-ph="aW" placeholder="Mot de passe (8 caractères min.)" required minlength="8" autocomplete="current-password">
+    <label id="optinWrap" class="opt" hidden><input type="checkbox" id="optin"><span data-i="aO">Je souhaite recevoir par email les nouveaux documentaires (désinscription en un clic).</span></label>
     <p id="err" class="err" hidden></p><div class="row"><button type="submit" class="pill on" id="bOk">Se connecter</button><button type="button" class="pill" id="bSw">Créer un compte</button></div></form>
-  <form id="fLocal" hidden><p class="mut">Créez un profil sur cet appareil : vos goûts sont mémorisés. (Les alertes email demandent un compte.)</p>
-    <input id="prenom" type="text" placeholder="Votre prénom" required maxlength="30"><div class="row"><button type="submit" class="pill on">Créer mon profil</button></div></form>
-  <div id="fOut" hidden><p class="mut" id="who"></p><div class="row"><button type="button" class="pill on" id="bOut">Se déconnecter</button></div></div>
-  <div class="row"><button type="button" class="pill" id="bX">Fermer</button></div></dialog>
-<div id="consent" class="consent" hidden><p>Nous utilisons des cookies publicitaires pour financer le site.</p>
-  <div><button class="pill" id="cNo">Refuser</button> <button class="pill on" id="cYes">Accepter</button></div></div>
+  <form id="fLocal" hidden><p class="mut" data-i="aLI">Créez un profil sur cet appareil : vos goûts sont mémorisés. (Les alertes email demandent un compte.)</p>
+    <input id="pseudoL" type="text" data-ph="aP" placeholder="Pseudo (3 à 20 caractères)" required maxlength="20" autocomplete="nickname"><input id="emailL" type="email" data-ph="aEo" placeholder="Email (facultatif)" autocomplete="email"><p id="errL" class="err" hidden></p>
+    <div class="row"><button type="submit" class="pill on" data-i="aLB">Créer mon profil</button></div></form>
+  <div id="fOut" hidden><p class="mut" id="who"></p><div id="editPseudo" hidden><input id="newPseudo" type="text" maxlength="20" data-ph="aMp" placeholder="Mon pseudo" autocomplete="nickname"><p id="errP" class="err" hidden></p><button type="button" class="pill" id="bPseudo" data-i="aSp">Enregistrer le pseudo</button></div>
+    <div class="row"><button type="button" class="pill on" id="bOut" data-i="aOut">Se déconnecter</button></div></div>
+  <div class="row"><button type="button" class="pill" id="bX" data-i="close">Fermer</button></div></dialog>
+<div id="consent" class="consent" hidden><p data-i="ck">Nous utilisons des cookies publicitaires pour financer le site.</p>
+  <div><button class="pill" id="cNo" data-i="no">Refuser</button> <button class="pill on" id="cYes" data-i="ok">Accepter</button></div></div>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="app.js"></script></body></html>

@@ -102,7 +102,7 @@ const licence = (u) => {
 };
 const langue = (l) => { const s = String(un(l) || "").toLowerCase(); return /^(fr|fre|fra|french)/.test(s) ? "FR" : /^(en|eng|english)/.test(s) ? "EN" : ""; };
 async function archive(src) {
-  const out = [], champs = ["identifier", "title", "description", "creator", "date", "publicdate", "licenseurl", "language", "runtime"].map((f) => "fl%5B%5D=" + f).join("&");
+  const out = [], champs = ["identifier", "title", "description", "creator", "date", "publicdate", "licenseurl", "language", "runtime", "format"].map((f) => "fl%5B%5D=" + f).join("&");
   for (let p = 1; out.length < src.max && p <= 25 && Date.now() < FIN; p++) {
     const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(src.q)}&${champs}&sort%5B%5D=downloads+desc&rows=200&page=${p}&output=json`;
     let docs;
@@ -113,11 +113,12 @@ async function archive(src) {
       if (!/^[\w.\-]+$/.test(id) || !titre) continue;
       const lic = String(un(d.licenseurl) || "");
       if (!src.domainePublic && !LIC_OK.test(lic)) continue;
-      const mins = duree(d.runtime);
+      const mins = duree(d.runtime), fm = [].concat(d.format || []).join(" ");
+      if (fm && !/(MPEG4|h\.264|Ogg Video|WebM|Matroska|MPEG2)/i.test(fm)) continue;   // uniquement des films lisibles
       if (src.minMinutes && mins && mins < src.minMinutes) continue;   // on écarte les extraits trop courts
       const desc = texte(d.description), dateBrute = un(d.date) || un(d.publicdate) || "";
       out.push({
-        source: "archive", ref: id, duree: mins, genre: src.genre || "documentaire", titre: coupe(titre, 140), texte: coupe(desc, 500),
+        source: "archive", ref: id, duree: mins, cc: /SubRip|WebVTT|Closed Caption/i.test(fm) ? 1 : 0, genre: src.genre || "documentaire", titre: coupe(titre, 140), texte: coupe(desc, 500),
         date: /^\d{4}/.test(dateBrute) ? String(dateBrute).slice(0, 10) : "",
         auteurs: [texte(un(d.creator))].filter(Boolean), langue: langue(d.language),
         credit: src.domainePublic ? src.nom + " — domaine public" : licence(lic),

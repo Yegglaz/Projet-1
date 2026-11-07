@@ -201,9 +201,8 @@ $("#cookies").onclick = e => { e.preventDefault(); $("#consent").hidden = false;
 if (consent === null) $("#consent").hidden = false; else chargerAds();
 
 /* ===== 8. Connexion + alertes email ===== */
-const FR_ERR = { "Invalid login credentials": "Email ou mot de passe incorrect.", "Email not confirmed": "Confirmez d'abord votre email (lien reçu par mail).", "User already registered": "Ce compte existe déjà : connectez-vous." };
+const FR_ERR = { "Email rate limit exceeded": "Trop d'emails envoyés par Supabase : désactivez « Confirm email » dans Supabase (Authentication, Sign In / Providers, Email) ou réessayez plus tard.", "Invalid API key": "Clé Supabase invalide : vérifiez SUPABASE_ANON_KEY dans config.js.", "Signups not allowed for this instance": "Les inscriptions sont désactivées dans Supabase.", "Invalid login credentials": "Email ou mot de passe incorrect.", "Email not confirmed": "Confirmez d'abord votre email (lien reçu par mail).", "User already registered": "Ce compte existe déjà : connectez-vous." };
 let inscription = false;
-if (C.SUPABASE_URL && C.SUPABASE_ANON_KEY && window.supabase) { try { sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY); } catch { sb = null; } }
 function majBtn() { const t = user ? "👤 " + (user.email || "").split("@")[0] : local ? "👤 " + local.nom : "Connexion"; $$(".authBtn").forEach(b => b.textContent = t); $("#acct").textContent = user ? "Connecté : " + user.email : local ? "Profil : " + local.nom : "Non connecté"; }
 function majAlert() {
   $("#alertes").hidden = !(user || local); $("#btnAlert").hidden = !user;
@@ -215,7 +214,7 @@ async function majAbo(actif) {
   try { const { error } = await sb.from("abonnes").upsert({ id: user.id, email: user.email, actif, sujets: P.follows }); if (!error) aboActif = actif; } catch {}
   majAlert();
 }
-if (sb) sb.auth.onAuthStateChange(async (_e, session) => {
+function brancher() { sb.auth.onAuthStateChange(async (_e, session) => {
   user = session?.user || null; majBtn();
   if (user) {
     try {
@@ -226,11 +225,23 @@ if (sb) sb.auth.onAuthStateChange(async (_e, session) => {
     } catch {}
   } else aboActif = false;
   majAlert();
-});
+}); }
+function initSb() {
+  if (sb || !(C.SUPABASE_URL && C.SUPABASE_ANON_KEY && window.supabase)) return;
+  try { sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY); brancher(); } catch { sb = null; }
+}
+initSb();
+if (!sb && C.SUPABASE_URL && C.SUPABASE_ANON_KEY && !window.supabase) {   // 2e source si la 1re est bloquée
+  const sc = document.createElement("script"); sc.src = "https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
+  sc.onload = () => { initSb(); majBtn(); majAlert(); }; document.head.appendChild(sc);
+}
 function dialogue() {
   const co = user || local; $("#fSb").hidden = !!co || !sb; $("#fLocal").hidden = !!co || !!sb; $("#fOut").hidden = !co;
   $("#dTitre").textContent = co ? "Mon compte" : inscription ? "Créer un compte" : "Connexion";
   $("#who").textContent = user ? user.email : local ? "Profil sur cet appareil : " + local.nom : "";
+  const manque = !(C.SUPABASE_URL && C.SUPABASE_ANON_KEY);
+  const msg = co || sb ? "" : manque ? "La connexion par email n'est pas encore activée sur ce site : il manque l'URL et la clé Supabase dans le fichier config.js. En attendant, créez un profil sur cet appareil." : "Le service de connexion est momentanément injoignable. Réessayez dans un instant, ou créez un profil sur cet appareil.";
+  $("#dMsg").textContent = msg; $("#dMsg").hidden = !msg;
   $("#err").hidden = true; $("#dlg").showModal();
 }
 $$(".authBtn").forEach(b => b.onclick = dialogue);
@@ -245,7 +256,7 @@ $("#fSb").onsubmit = async e => {
     if (inscription && $("#optin").checked) store.set("optin", true);
     if (inscription && !data.session) { $("#err").textContent = "Compte créé. Vérifiez votre email pour le confirmer, puis connectez-vous."; $("#err").hidden = false; $("#err").style.color = "inherit"; }
     else $("#dlg").close();
-  } catch (x) { $("#err").style.color = ""; $("#err").textContent = FR_ERR[x.message] || x.message || "Erreur de connexion."; $("#err").hidden = false; }
+  } catch (x) { $("#err").style.color = ""; $("#err").textContent = FR_ERR[x.message] || (/fetch|network/i.test(x.message || "") ? "Impossible de joindre Supabase : vérifiez SUPABASE_URL dans config.js." : x.message) || "Erreur de connexion."; $("#err").hidden = false; }
 };
 $("#fLocal").onsubmit = e => { e.preventDefault(); local = { nom: $("#prenom").value.trim() }; store.set("local", local); majBtn(); majAlert(); $("#dlg").close(); };
 $("#bOut").onclick = async () => { if (sb && user) await sb.auth.signOut(); user = null; local = null; aboActif = false; store.set("local", null); majBtn(); majAlert(); $("#dlg").close(); };

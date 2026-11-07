@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Test de la connexion</title>
+<style>body{font-family:Arial,sans-serif;max-width:560px;margin:40px auto;padding:0 18px;line-height:1.5}li{margin:10px 0}.ok{color:#0a7d33}.ko{color:#c0172b}code{background:#eee;padding:1px 5px;border-radius:4px}</style></head><body>
+<h1>Test de la connexion</h1><p>Cette page vérifie chaque étape et dit quoi corriger.</p><ul id="r"></ul>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const r=document.getElementById("r"),C=window.CONFIG||{};
+const add=(ok,t)=>{r.insertAdjacentHTML("beforeend",`<li class="${ok?"ok":"ko"}">${ok?"✓":"✗"} ${t}</li>`);return ok};
+(async()=>{
+ if(!add(!!window.CONFIG,"Fichier <code>config.js</code> trouvé"+(window.CONFIG?"":" — créez <code>public/config.js</code> (copie de <code>config.exemple.js</code>)")))return;
+ if(!add(/^https:\/\/[a-z0-9]+\.supabase\.co\/?$/.test(C.SUPABASE_URL||""),"SUPABASE_URL correcte"+(C.SUPABASE_URL?"":" — vide : collez « Project URL » de Supabase (Project Settings, API)")+((C.SUPABASE_URL&&!/^https:\/\/[a-z0-9]+\.supabase\.co\/?$/.test(C.SUPABASE_URL))?" — format attendu : <code>https://xxxx.supabase.co</code>":"")))return;
+ const k=C.SUPABASE_ANON_KEY||"";
+ if(!add(k.length>40&&!/service_role/i.test(atob((k.split(".")[1]||"").replace(/-/g,"+").replace(/_/g,"/")||"")||""),"SUPABASE_ANON_KEY présente"+(k?"":" — vide : collez la clé « anon public »")+" (jamais la clé service_role)"))return;
+ if(!add(!!window.supabase,"Bibliothèque Supabase chargée"+(window.supabase?"":" — bloquée sur ce réseau/navigateur (désactivez le bloqueur de publicités)")))return;
+ const sb=supabase.createClient(C.SUPABASE_URL,k);
+ try{const {error}=await sb.auth.getSession();add(!error,"Service Supabase joignable"+(error?" — "+error.message:""))}catch(e){add(false,"Supabase injoignable — vérifiez l'URL ("+e.message+")");return}
+ for(const t of ["profils","abonnes"]){const {error}=await sb.from(t).select("id").limit(1);
+  add(!error,"Table <code>"+t+"</code>"+(error?" — "+(/not find|does not exist|schema cache/i.test(error.message)?"absente : exécutez "+(t==="profils"?"<code>supabase.sql</code>":"<code>supabase-emails.sql</code>")+" dans Supabase (SQL Editor)":error.message):" prête"))}
+ r.insertAdjacentHTML("beforeend",'<li>Dans Supabase, vérifiez aussi : <b>Authentication, Sign In / Providers, Email</b> : désactivez « Confirm email » pour une inscription immédiate ; <b>Authentication, URL Configuration</b> : mettez l\'adresse de votre site dans « Site URL ».</li>');
+})();
+</script></body></html>

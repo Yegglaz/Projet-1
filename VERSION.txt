@@ -1,1 +1,1 @@
-Docu v13 — installation propre : version visible, anti-cache, page de statut
+Docu v13.1 — Mon compte : ajout de l'email

@@ -459,6 +459,7 @@ function ajouter(items) {
 let enAttente = (location.hash.match(/^#d-(i[0-9a-z]+)$/) || [])[1];
 function ouvrirAttendu() { if (enAttente && byId.has(enAttente)) { const x = enAttente; enAttente = null; ouvrir(x); } }
 appliquer(); majBtn(); majAlert(); compteur();
+const bm = document.querySelector('meta[name="build"]'); if (bm && $("#ver")) $("#ver").textContent = "Version " + bm.content;
 $("#gReco").innerHTML = '<div class="sk"></div>'.repeat(5);
 Promise.all([json("data/manifest.json"), json("data/articles.json"), json("contenus.json")]).then(async ([man, a, own]) => {
   ajouter((Array.isArray(own) ? own : []).map(o => ({ source: "docu", sourceNom: "Rédaction Docu", ...o })));

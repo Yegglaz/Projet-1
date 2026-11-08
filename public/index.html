@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#d2517f"><title>Docu — Documentaires, science & nature</title>
+<meta name="theme-color" content="#d2517f"><meta name="build" content="dev"><title>Docu — Documentaires, science & nature</title>
 <meta name="description" content="Des milliers de documentaires vidéo et écrits sur la science et la nature, personnalisés selon vos goûts.">
 <link rel="preconnect" href="https://archive.org"><link rel="preconnect" href="https://upload.wikimedia.org"><link rel="preconnect" href="https://fr.wikipedia.org"><link rel="dns-prefetch" href="https://images.theconversation.com">
-<link rel="stylesheet" href="style.css"></head><body>
+<link rel="stylesheet" href="style.css?v=dev"></head><body>
 <nav class="tabs" id="tabs"><div class="brand"><span class="logo">docu</span></div>
   <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9M4.5 4.5a10.6 10.6 0 0 0 0 15M19.5 4.5a10.6 10.6 0 0 1 0 15"/></svg><span data-i="nh">Accueil</span></button>
   <button data-tab="today"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span data-i="nt">Du jour</span></button>
@@ -35,7 +35,7 @@
     <div id="alertes" class="acct" style="margin-top:10px" hidden><span id="alTxt">Alertes email</span><button class="btn" id="btnAlert" style="margin:0">Activer</button></div>
     <h2 data-i="lt">Sujets suivis</h2><div class="pills" id="topics"></div>
     <h2 data-i="ll">Mes coups de cœur</h2><div class="rows" id="gLiked"></div><p id="noLiked" class="mut" data-i="le">Appuyez sur ♥ dans un documentaire pour le retrouver ici.</p>
-    <p class="foot"><a href="mentions-legales.html" data-i="f1">Mentions légales</a> · <a href="confidentialite.html" data-i="f2">Confidentialité</a> · <a href="#" id="cookies" data-i="f3">Gérer les cookies</a></p></section>
+    <p class="foot"><a href="mentions-legales.html" data-i="f1">Mentions légales</a> · <a href="confidentialite.html" data-i="f2">Confidentialité</a> · <a href="#" id="cookies" data-i="f3">Gérer les cookies</a><br><span id="ver"></span></p></section>
 </main>
 <div id="detail" class="detail" hidden></div>
 
@@ -63,6 +63,6 @@
   <div class="row"><button type="button" class="pill" id="bX" data-i="close">Fermer</button></div></dialog>
 <div id="consent" class="consent" hidden><p data-i="ck">Nous utilisons des cookies publicitaires pour financer le site.</p>
   <div><button class="pill" id="cNo" data-i="no">Refuser</button> <button class="pill on" id="cYes" data-i="ok">Accepter</button></div></div>
-<script src="config.js"></script>
+<script src="config.js?v=dev"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="app.js"></script></body></html>
+<script src="app.js?v=dev"></script></body></html>

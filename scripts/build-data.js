@@ -150,57 +150,6 @@ async function youtube(ch) {
 }
 
 
-/* ---------- Wikipédia : « articles de qualité » et « bons articles » (CC BY-SA 4.0) ---------- */
-const MAX_WIKI = 1200, DIR_WIKI = path.join(__dirname, "..", "public", "data", "wiki");
-const WIKI_THEMES = ["astronomie","système solaire","cosmologie","océan","mammifère","oiseau","poisson","insecte","reptile","dinosaure","préhistoire","archéologie","Égypte antique","Rome antique","Moyen Âge","histoire de France","Seconde Guerre mondiale","géologie","volcan","climat","écologie","forêt","médecine","maladie","cerveau","génétique","biologie","physique","chimie","mathématiques","énergie nucléaire","informatique","exploration spatiale","astronaute","physicien","chimiste","naturaliste","explorateur","civilisation","mythologie"];
-const escH = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-function wikiHtml(txt) {
-  const STOP = /^(Notes et références|Notes|Références|Voir aussi|Articles connexes|Liens externes|Bibliographie|Annexes|Sources|Publications|Filmographie|Galerie)$/i;
-  const out = []; let intro = "", ignorer = false, total = 0, vuTitre = false;
-  for (const ligne of txt.split("\n")) {
-    const m = ligne.match(/^(={2,4})\s*(.+?)\s*={2,4}$/);
-    if (m) { const niv = m[1].length === 2 ? 2 : 3; if (niv === 2) ignorer = STOP.test(m[2]); if (ignorer) continue; vuTitre = true; out.push(`<h${niv}>${escH(m[2])}</h${niv}>`); continue; }
-    const l = ligne.trim(); if (!l || ignorer) continue;
-    if (!vuTitre && !intro) intro = l;
-    total += l.length; if (total > 70000) break;
-    out.push(`<p>${escH(l)}</p>`);
-  }
-  return { html: out.join(""), intro };
-}
-async function wikiTitres() {
-  const taches = [];
-  for (const th of WIKI_THEMES) for (const cat of ["Article de qualité", "Bon article"]) for (const off of [0, 50, 100]) taches.push({ th, cat, off });
-  const vus = new Map();
-  await enParallele(taches, 6, async (t) => {
-    const q = `incategory:"${t.cat}" ${t.th}`;
-    const j = JSON.parse(await get(`https://fr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=50&sroffset=${t.off}&srnamespace=0&srprop=wordcount&format=json`));
-    ((j.query && j.query.search) || []).forEach((s) => { if (s.wordcount >= 1200 && !vus.has(s.pageid)) vus.set(s.pageid, s.title); });
-  });
-  return [...vus.entries()].slice(0, MAX_WIKI);
-}
-async function wikiArticle([pageid]) {
-  const u = `https://fr.wikipedia.org/w/api.php?action=query&format=json&prop=extracts%7Cpageimages%7Cinfo&explaintext=1&exsectionformat=wiki&piprop=thumbnail&pithumbsize=900&inprop=url&pageids=${pageid}`;
-  const p = Object.values(JSON.parse(await get(u)).query.pages)[0];
-  if (!p || !p.extract) throw new Error("vide");
-  const { html, intro } = wikiHtml(p.extract);
-  if (html.length < 3000) throw new Error("court");
-  fs.mkdirSync(DIR_WIKI, { recursive: true });
-  fs.writeFileSync(path.join(DIR_WIKI, pageid + ".json"), JSON.stringify({ html }));
-  const th = p.thumbnail && p.thumbnail.source;
-  return {
-    source: "wikipedia", ref: String(pageid), sourceNom: "Wikipédia", genre: "dossier", titre: p.title, texte: coupe(intro, 320),
-    date: String(p.touched || "").slice(0, 10), image: th && /^https:\/\/upload\.wikimedia\.org\/[\w.\-\/?=&%,+~:@;]+$/.test(th) ? th : "",
-    lienOriginal: /^https:\/\/fr\.wikipedia\.org\//.test(p.fullurl || "") ? p.fullurl : "", credit: "Image : Wikimedia Commons",
-  };
-}
-async function wikipedia() {
-  const titres = await wikiTitres();
-  console.log("wikipedia : titres trouvés", titres.length);
-  const items = await enParallele(titres, 8, wikiArticle);
-  console.log("wikipedia : dossiers enregistrés", items.length);
-  return items;
-}
-
 /* ---------- Wikipédia (CC BY-SA) : des milliers d'articles de fond ---------- */
 const WP = "https://fr.wikipedia.org/w/api.php";
 const wp = async (p) => JSON.parse(await get(WP + "?" + new URLSearchParams({ format: "json", formatversion: "2", ...p })));
@@ -282,7 +231,19 @@ async function nouveautes(tous) {
   console.log("nouveautés :", sel.length, "(sur", neuf.length, "nouveaux contenus)");
 }
 
+/* ---------- Numéro de version + anti-cache : les navigateurs rechargent toujours les derniers fichiers ---------- */
+function estamper(dir) {
+  const d = new Date(), id = d.getTime().toString(36), txt = id + " · " + d.toISOString().slice(0, 16).replace("T", " ") + " UTC";
+  for (const f of ["index.html", "statut.html"]) {
+    const p = path.join(dir, f); if (!fs.existsSync(p)) continue;
+    const s = fs.readFileSync(p, "utf8").replace(/(style\.css|app\.js|config\.js)\?v=[\w.-]+/g, "$1?v=" + id).replace(/(<meta name="build" content=")[^"]*(")/, "$1" + txt + "$2");
+    fs.writeFileSync(p, s);
+  }
+  console.log("version du site :", txt); return txt;
+}
+
 async function main() {
+  try { estamper(path.join(__dirname, "..", "public")); } catch (e) { console.log("version : ignorée", e.message); }
   FIN = Date.now() + 10 * 60 * 1000;
   const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, "sources.json"), "utf8"));
   const ancien = lireJson("manifest.json") || {};
@@ -299,5 +260,5 @@ async function main() {
   await nouveautes([...(arts2 || []), ...wiki, ...vids]);
   console.log("TOTAL : vidéos", man.videos.total, "| écrits Wikipédia", man.wiki.total, "| articles", (arts2 || []).length);
 }
-module.exports = { nettoyer, archive, youtube, licence, wikipedia, hash, nouveautes, tranches };
+module.exports = { estamper, nettoyer, archive, youtube, licence, wikipedia, hash, nouveautes, tranches };
 if (require.main === module) main().catch((e) => console.log("Échec :", e.message));

@@ -3,6 +3,17 @@
   publish = "public"
   functions = "netlify/functions"
 
+# La page d'accueil est toujours revérifiée : une mise à jour est visible immédiatement
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 [[headers]]
   for = "/data/*"
   [headers.values]
@@ -11,4 +22,9 @@
 [[headers]]
   for = "/*.js"
   [headers.values]
-    Cache-Control = "public, max-age=300"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

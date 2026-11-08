@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="build" content="dev"><title>Statut du site</title>
+<style>body{font-family:Arial,sans-serif;max-width:600px;margin:36px auto;padding:0 18px;line-height:1.5}li{margin:10px 0;list-style:none}.ok{color:#0a7d33}.ko{color:#c0172b}.in{color:#8a6100}code{background:#eee;padding:1px 5px;border-radius:4px}h1{margin-bottom:4px}</style></head><body>
+<h1>Statut du site</h1><p>Cette page vérifie que la mise à jour est bien passée.</p><ul id="r"></ul>
+<p><a href="/">← Retour au site</a> · <a href="test-connexion.html">Tester la connexion</a></p>
+<script src="config.js?v=dev"></script>
+<script>
+const r=document.getElementById("r"),C=window.CONFIG||{};
+const add=(c,t)=>r.insertAdjacentHTML("beforeend",`<li class="${c}">${c==="ok"?"✓":c==="ko"?"✗":"•"} ${t}</li>`);
+const j=u=>fetch(u+"?t="+Date.now(),{cache:"no-store"}).then(x=>x.ok?x.json():null).catch(()=>null);
+const n=x=>(x||0).toLocaleString("fr-FR");
+(async()=>{
+ const b=document.querySelector('meta[name="build"]').content;
+ add(b==="dev"?"ko":"ok","Version du site : <code>"+b+"</code>"+(b==="dev"?" — la construction n'a pas tourné (vérifiez le journal Netlify)":" (si l'heure est ancienne, la mise à jour n'est pas passée)"));
+ const [m,a,nv]=await Promise.all([j("data/manifest.json"),j("data/articles.json"),j("data/nouveautes.json")]);
+ const maj=m&&m.maj?new Date(m.maj):null;
+ add(maj?"ok":"ko","Données mises à jour : "+(maj?maj.toLocaleString("fr-FR")+" (il y a "+Math.round((Date.now()-maj)/36e5)+" h)":"jamais — la récupération n'a pas encore réussi"));
+ const v=m&&m.videos?m.videos.total:0,w=m&&m.wiki?m.wiki.total:0,ar=a&&a.items?a.items.length:0;
+ add(v?"ok":"ko","Documentaires vidéo : <b>"+n(v)+"</b>"+(v?"":" — vérifiez les lignes « archive » du journal Netlify"));
+ add(w>=1000?"ok":"in","Documentaires écrits Wikipédia (catalogue du site) : <b>"+n(w)+"</b>"+(w>=1000?"":" — le mode direct complète en ligne (jusqu'à 1 500)"));
+ add(ar?"ok":"in","Articles The Conversation : <b>"+n(ar)+"</b>");
+ add("in","Nouveautés détectées à la dernière mise à jour : <b>"+n(nv&&nv.items?nv.items.length:0)+"</b> (la liste sert aux emails du lendemain)");
+ add(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY?"ok":"ko","Connexion par email : "+(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY?"configurée":"non configurée — remplissez <code>public/config.js</code>"));
+})();
+</script></body></html>
